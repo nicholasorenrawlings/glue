@@ -1,7 +1,10 @@
 <?php
 
     /**
-     * glue
+     * Modified from glue: http://gluephp.com/
+     * Changed to allow a base URL, to throw better exceptions on failure,
+     * and to be able to pass arguments to the controller class constructor,
+     * and to ignore the query string.
      *
      * Provides an easy way to map URLs to classes. URLs can be literal
      * strings or regular expressions.
@@ -35,16 +38,19 @@
          *
          * the main static function of the glue class.
          *
-         * @param   array    	$urls  	    The regex-based url to class mapping
+         * @param   array     $urls         The regex-based url to class mapping
+         * @param   string    $base_url     The base url for the website
+         * @param   array     $globals      Global variables to be extracted into the class
          * @throws  Exception               Thrown if corresponding class is not found
          * @throws  Exception               Thrown if no match is found
          * @throws  BadMethodCallException  Thrown if a corresponding GET,POST is not found
          *
          */
-        static function stick ($urls) {
+        static function stick ($urls, $base_url='', $args=array()) {
 
             $method = strtoupper($_SERVER['REQUEST_METHOD']);
-            $path = $_SERVER['REQUEST_URI'];
+            $path = preg_replace('/\\?.*$/', '', $_SERVER['REQUEST_URI']);
+            $base_url = preg_quote($base_url, '/');
 
             $found = false;
 
@@ -52,24 +58,32 @@
 
             foreach ($urls as $regex => $class) {
                 $regex = str_replace('/', '\/', $regex);
-                $regex = '^' . $regex . '\/?$';
+                $regex = '^' . $base_url . $regex . '\/?$';
                 if (preg_match("/$regex/i", $path, $matches)) {
                     $found = true;
                     if (class_exists($class)) {
-                        $obj = new $class;
+                        if (count($args) && method_exists($class, '__construct')) {
+                          $reflect = new ReflectionClass($class);
+                          $obj = $reflect->newInstanceArgs($args);
+                        } else {
+                          $obj = new $class;
+                        }
                         if (method_exists($obj, $method)) {
                             $obj->$method($matches);
                         } else {
                             throw new BadMethodCallException("Method, $method, not supported.");
                         }
                     } else {
-                        throw new Exception("Class, $class, not found.");
+                        throw new ControllerNotFoundException("Class, $class, not found.");
                     }
                     break;
                 }
             }
             if (!$found) {
-                throw new Exception("URL, $path, not found.");
+                throw new URLNotFoundException("URL, $path, not found.");
             }
         }
     }
+    
+    class ControllerNotFoundException extends Exception {}
+    class URLNotFoundException extends Exception {}
