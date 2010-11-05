@@ -1,7 +1,8 @@
 Glue
 ====
 
-Author: Joe Topjian, joe@topjian.net
+Original Author: Joe Topjian, joe@topjian.net
+Modified by powerpak@github
 
 Glue is a simple PHP class that maps URLs to classes. The concepts are similar to web.py for Python.
 
