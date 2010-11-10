@@ -1,0 +1,13 @@
+RewriteEngine On                                                                                                        
+RewriteBase / 
+
+# These directories should never be accessed directly (add more as needed)
+RewriteRule ^(private/|includes/) - [F,L]
+
+# Only the images, css, and js directories can be accessed directly (add more as needed)
+RewriteCond $1 ^(index\.php|css/|js/|images/)
+# No rewriting
+RewriteRule ^(.*)$ - [PT,L]
+
+# Rewrite all other pages to the front controller
+RewriteRule . index.php
