@@ -17,6 +17,8 @@
      *
      * Example:
      *
+     * require_once('glue.php'); 
+     *
      * $urls = array(
      *     '/' => 'index',
      *     '/page/(\d+) => 'page'
@@ -41,8 +43,8 @@
          * @param   array     $urls         The regex-based url to class mapping
          * @param   string    $base_url     The base url for the website
          * @param   array     $globals      Global variables to be extracted into the class
-         * @throws  Exception               Thrown if corresponding class is not found
-         * @throws  Exception               Thrown if no match is found
+         * @throws  ControllerNotFound      Thrown if corresponding class is not found
+         * @throws  URLNotFoundException    Thrown if no match is found
          * @throws  BadMethodCallException  Thrown if a corresponding GET,POST is not found
          *
          */
