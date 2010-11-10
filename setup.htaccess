@@ -1,3 +1,5 @@
+# If an index.php file is intended to be used as a front controller using glue, this
+# .htaccess is a good starting point.
 RewriteEngine On                                                                                                        
 RewriteBase / 
 
