@@ -203,7 +203,7 @@ This version of Glue allows you to specify the base URL of the site as the secon
 
 Sometimes it is helpful to be able to pass arguments to the constructor of the controller, usually global variables that are derived from the configuration of the site or loaded based on data in the session before URL routing.
 
-Common uses include loading the current user's information, which every controller will want to have.  You could also imagine adjusting `$urls` based on who is logged in, e.g. to redirect anonymous users to a login form.
+Common uses include loading the current user's information if your site has a session-based login system, since every controller will want to have this data.  You could also imagine adjusting `$urls` based on who is logged in, e.g. to redirect unknown users to a login/registration form.
 
     <?php
         require_once('glue.php');
@@ -249,9 +249,9 @@ Common uses include loading the current user's information, which every controll
         glue::stick($urls, $BASE_URL, $args);
     ?>
     
-This code simulates loading the `$user` from a session key and a `$config` array, and `glue::stick` will pass these as arguments to any controller it instantiates.
+This code simulates loading the `$user` from a session key and a `$config` array, and `glue::stick` will pass these as arguments to any controller it instantiates.  So, for the `/` route, it will call `$controller = new index($args[0], $args[1])` which is equivalent to `$controller = new index($user, $config)`.
 
-It is possible to do this with global variables in your controllers, but this is messy and less maintainable.
+It is possible to simulate this with global variables in your controllers, but this is messy and less maintainable, so passing in specific data via Glue is often preferable.
 
 ### Catching Errors: 404's, 405's, etc.
 
