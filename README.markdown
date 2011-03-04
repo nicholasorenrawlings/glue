@@ -213,6 +213,7 @@ Common uses include loading the current user's information, which every controll
 
         // You could imagine this function loading user info from the database, etc.
         function load_user_from_session() {
+            session_start();
             return !empty($_SESSION['user']) ? $_SESSION['user'] : NULL;
         }
         $user = load_user_from_session();
