@@ -265,7 +265,7 @@ Without any handlers, these exceptions will spew rather ugly looking errors to t
 
     <?php
         try {
-            glue::stick($urls, $BASE_URL, array($g));
+            glue::stick($urls);
         } catch (BadMethodCallException $e) {
             // show your own 405 Method Not Allowed page.
         } catch (ControllerNotFoundException $e) {
