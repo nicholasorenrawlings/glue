@@ -180,7 +180,7 @@ The final component of Glue is the glue::stick() Static Method. It takes one arg
 
 ## Catching Errors: 404's, 405's, etc.
 
-This version of Glue has been modified to throw exceptions when an HTTP request is received that Glue is not able to handle.
+This version of Glue has been modified to throw particular exceptions when an HTTP request is received that Glue is not able to handle.
 
 * `BadMethodCallException` is thrown when the user performs an HTTP action that does not have a corresponding method in your class; e.g., the user performed a `POST` on a URL but the class for that URL has no `POST()` method.
 * `ControllerNotFoundException` is thrown when your `$urls` array maps a URL to a class that could not be loaded.
