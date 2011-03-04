@@ -178,7 +178,7 @@ The final component of Glue is the glue::stick() Static Method. It takes one arg
   
 `glue::stick`’s job is to process the requested URL with your `$url`’s and run a matching class if one exists. If a matching URL does not exist, Glue will throw an error.
 
-## Catching Errors: 404's, 403's, etc.
+## Catching Errors: 404's, 405's, etc.
 
 This version of Glue has been modified to throw exceptions when an HTTP request is received that Glue is not able to handle.
 
