@@ -201,7 +201,9 @@ This version of Glue allows you to specify the base URL of the site as the secon
     
 ### Passing arguments to the controller constructor
 
-Sometimes it is helpful to be able to pass arguments to the constructor of the controller, usually global variables that are derived from the configuration of the site or loaded based on data in the session.
+Sometimes it is helpful to be able to pass arguments to the constructor of the controller, usually global variables that are derived from the configuration of the site or loaded based on data in the session before URL routing.
+
+Common uses include loading the current user's information, which every controller will want to have.  You could also imagine adjusting `$urls` based on who is logged in, e.g. to redirect anonymous users to a login form.
 
     <?php
         require_once('glue.php');
@@ -209,31 +211,41 @@ Sometimes it is helpful to be able to pass arguments to the constructor of the c
         // Replace the above line with the following line if your site lives in a subfolder
         // $BASE_URL = '/sub/folder');
 
-        // This function, for instance, would examine $_SESSION
-        // and load something into $user
+        // You could imagine this function loading user info from the database, etc.
+        function load_user_from_session() {
+            return !empty($_SESSION['user']) ? $_SESSION['user'] : NULL;
+        }
         $user = load_user_from_session();
-        $args = array($user);
+        // Configuration stuff loaded from somewhere...
+        $config = array('foo'=>'bar');
+        
+        // Arguments that glue will pass to every controller's constructor
+        $args = array($user, $config);
 
         $urls = array(
             '/' => 'index'
         );
 
         class Controller {
-            function __construct($user) {
+            // All controllers could, for instance, set member variables upon instantiation
+            function __construct($user, $config) {
                 $this->user = $user;
+                $this->config = $config;
             }
         }
 
         class index extends Controller {
-            // $this->user will be accessible in this controller
-            // and all others extending Controller...
-
-            // ... GET(), other methods...
+            // $this->user and $this->config will be accessible in this controller
+            // and all other classes extending Controller...
+            // ... 
+            // implement GET(), other methods
         }
         // and other classes as need be...
 
         glue::stick($urls, $BASE_URL, $args);
     ?>
+    
+This code simulates loading the `$user` and `$config`, and `glue::stick` will pass it to every controller it instantiates.
 
 ### Catching Errors: 404's, 405's, etc.
 
