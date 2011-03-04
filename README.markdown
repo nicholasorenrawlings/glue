@@ -6,7 +6,31 @@
 
 Glue is a simple PHP class that maps URLs to classes. The concepts are similar to web.py for Python.
 
-## Hello, World!
+## Intro
+
+### Setup
+
+Download and unzip/untar the whole repository into a folder, which should be the `DocumentRoot` for your site.
+    
+Now, let's configure Apache.  Glue requires `mod_rewrite` for pretty-URLs.  Copy the `setup.htaccess` file to `.htaccess` in the same directory.  (If your web host does not allow `.htaccess` files, you will have to ask them to enable `AllowOverride All`.)
+
+If your new site is based in a subfolder of a domain, e.g. `http://example.com/sub/folder/` is the index, edit the `RewriteBase`:
+
+    RewriteBase /sub/folder/
+    
+Otherwise, leave it as is.
+    
+By default, this `.htaccess` file hides all paths starting with `setup.` and `README` and anything within the folders `private/` and `includes/` from direct access.  You can put PHP libraries in those folders, for example, and they will not be directly accessible from the web.  You can change this by editing the following line in `.htaccess`:
+
+    # These directories should never be accessed directly (add more as needed)
+    RewriteRule ^(setup\.|README|private/|includes/) - [F,L]
+
+Also by default, this `.htaccess` file allows direct access to any paths starting with `css/`, `js/`, and `images/`.  If you create these folders, you can put resources in them that will be accessible directly.  You can change this by editing the following line in `.htaccess`:
+
+    # Only the images, css, and js directories can be accessed directly (add more as needed)
+    RewriteCond $1 ^(index\.php|css/|js/|images/)
+
+### Hello, World!
 
 The following example illustrates a simple “Hello, World!”. Copy and paste the below code into `index.php` and then access it. Ensure you have glue.php in the same directory.
 
