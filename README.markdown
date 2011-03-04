@@ -227,8 +227,8 @@ Common uses include loading the current user's information, which every controll
             '/' => 'index'
         );
 
-        class Controller {
-            // All controllers could, for instance, set member variables upon instantiation
+        abstract class Controller {
+            // Let's have all controllers save the constructor arguments into member variables
             function __construct($user, $config) {
                 $this->user = $user;
                 $this->config = $config;
@@ -238,15 +238,20 @@ Common uses include loading the current user's information, which every controll
         class index extends Controller {
             // $this->user and $this->config will be accessible in this controller
             // and all other classes extending Controller...
-            // ... 
-            // implement GET(), other methods
+
+            function GET() {
+                var_dump($this->config);
+            }
         }
-        // and other classes as need be...
+        
+        // extend $urls and add other classes as need be...
 
         glue::stick($urls, $BASE_URL, $args);
     ?>
     
-This code simulates loading the `$user` and `$config`, and `glue::stick` will pass it to every controller it instantiates.
+This code simulates loading the `$user` from a session key and a `$config` array, and `glue::stick` will pass these as arguments to any controller it instantiates.
+
+It is possible to do this with global variables in your controllers, but this is messy and less maintainable.
 
 ### Catching Errors: 404's, 405's, etc.
 
