@@ -14,11 +14,11 @@ Download and unzip/untar the whole repository into a folder, which should be the
     
 Now, let's configure Apache.  Glue requires `mod_rewrite` for pretty-URLs.  Copy the `setup.htaccess` file to `.htaccess` in the same directory.  (If your web host does not allow `.htaccess` files, you will have to ask them to enable `AllowOverride All`.)
 
-If your new site is based in a subfolder of a domain, e.g. `http://example.com/sub/folder/` is the index, edit the `RewriteBase`:
+If your new site is based in a subfolder of a domain, e.g. `http://example.com/sub/folder/` is the base URL, edit the `RewriteBase`:
 
-    RewriteBase /sub/folder/
+    RewriteBase /sub/folder
     
-Otherwise, leave it as is.
+Otherwise, leave it as the default of `/`.
     
 By default, this `.htaccess` file hides all paths starting with `setup.` and `README` and anything within the folders `private/` and `includes/` from direct access.  You can put PHP libraries in those folders, for example, and they will not be directly accessible from the web.  You can change this by editing the following line in `.htaccess`:
 
@@ -177,3 +177,25 @@ The final component of Glue is the glue::stick() Static Method. It takes one arg
     ?>
   
 `glue::stick`’s job is to process the requested URL with your `$url`’s and run a matching class if one exists. If a matching URL does not exist, Glue will throw an error.
+
+## Catching Errors: 404's, 403's, etc.
+
+This version of Glue has been modified to throw exceptions when an HTTP request is received that Glue is not able to handle.
+
+* `BadMethodCallException` is thrown when the user performs an HTTP action that does not have a corresponding method in your class; e.g., the user performed a `POST` on a URL but the class for that URL has no `POST()` method.
+* `ControllerNotFoundException` is thrown when your `$urls` array maps a URL to a class that could not be loaded.
+* `URLNotFoundException` is thrown when the user visits a URL that isn't in your `$urls` page, most likely the result of following a bad link--this is your typical 404 Not Found error.
+
+Without any handlers, these exceptions will spew rather ugly looking errors to the browser.  You can catch them in the typical PHP manner, and display nice error pages instead:
+
+    <?php
+        try {
+          glue::stick($urls, BASE_URL, array($g));
+        } catch (BadMethodCallException $e) {
+          // show your own 405 Method Not Allowed page.
+        } catch (ControllerNotFoundException $e) {
+          // Show your own 500 My Code Done Broke page.
+        } catch (URLNotFoundException $e) {
+          // Show your own 404 Not Found page.
+        }
+    ?>
