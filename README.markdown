@@ -1,10 +1,12 @@
 # Glue
 
-* Original Author: Joe Topjian, joe@topjian.net
-* Modified by powerpak@github
-* The original Glue's site is found at http://gluephp.com.
-
 Glue is a simple PHP class that maps URLs to classes. The concepts are similar to web.py for Python.
+
+Modifications from the original by Joe Topjian (joe@topjian.net, http://gluephp.com) include:
+
+* Differentiated exceptions
+* Configurable base URL
+* Passing arguments to the controller class constructor
 
 ## Intro
 
@@ -18,7 +20,7 @@ If your new site is based in a subfolder of a domain, e.g. `http://example.com/s
 
     RewriteBase /sub/folder
     
-Otherwise, leave it as the default of `/`.
+Also, **make sure** to follow all comments in this README's code examples dealing with sites within a subfolder.
     
 By default, this `.htaccess` file hides all paths starting with `setup.` and `README` and anything within the folders `private/` and `includes/` from direct access.  You can put PHP libraries in those folders, for example, and they will not be directly accessible from the web.  You can change this by editing the following line in `.htaccess`:
 
@@ -32,10 +34,13 @@ Also by default, this `.htaccess` file allows direct access to any paths startin
 
 ### Hello, World!
 
-The following example illustrates a simple “Hello, World!”. Copy and paste the below code into `index.php` and then access it. Ensure you have glue.php in the same directory.
+The following example illustrates a simple “Hello, World!”. Copy and paste the below code into `index.php`. Ensure you have glue.php in the same directory.
 
     <?php
         require_once('glue.php');
+        $BASE_URL = '';
+        // Replace the above line with the following line if your site lives in a subfolder
+        // $BASE_URL = '/sub/folder');
 
         $urls = array(
             '/' => 'index'
@@ -47,8 +52,10 @@ The following example illustrates a simple “Hello, World!”. Copy and paste t
             }
         }
 
-        glue::stick($urls);
+        glue::stick($urls, $BASE_URL);
     ?>
+
+Now access the base URL of your site, e.g. `http://example.com/` or `http://example.com/sub/folder`.  If you see "Hello, World!" Apache has been configured correctly and your installation of Glue is working.
 
 ## URLs
 
@@ -89,6 +96,9 @@ You can also capture parts of the URLs and pass them on to the class methods:
 
     <?php
         require_once('glue.php');
+        $BASE_URL = '';
+        // Replace the above line with the following line if your site lives in a subfolder
+        // $BASE_URL = '/sub/folder');
 
         $urls = array(
             '/' => 'index',
@@ -105,7 +115,7 @@ You can also capture parts of the URLs and pass them on to the class methods:
             }
         }
 
-        glue::stick($urls);
+        glue::stick($urls, $BASE_URL);
     ?>
 
 When you visit http://example.com you will see “You did not enter a number.”.
@@ -120,6 +130,9 @@ Named Regular Expressions are a rather unknown regular expression feature. They 
 
     <?php
         require_once('glue.php');
+        $BASE_URL = '';
+        // Replace the above line with the following line if your site lives in a subfolder
+        // $BASE_URL = '/sub/folder');
 
         $urls = array(
             '/' => 'index',
@@ -136,7 +149,7 @@ Named Regular Expressions are a rather unknown regular expression feature. They 
             }
         }
 
-        glue::stick($urls);
+        glue::stick($urls, $BASE_URL);
     ?>
 
 ## Class Methods
@@ -170,15 +183,59 @@ This example shows how to use GET and POST to process a form:
 
 ## The Static Method
 
-The final component of Glue is the glue::stick() Static Method. It takes one argument: the $urls array.
+The final component of Glue is the glue::stick() Static Method. One argument is required: the $urls array.
 
     <?php
         glue::stick($urls);
     ?>
   
-`glue::stick`’s job is to process the requested URL with your `$url`’s and run a matching class if one exists. If a matching URL does not exist, Glue will throw an error.
+`glue::stick`’s job is to process the requested URL with your `$url`’s and run a matching class if one exists. If a matching URL does not exist, Glue will throw an exception.
 
-## Catching Errors: 404's, 405's, etc.
+### Configurable base URL
+
+This version of Glue allows you to specify the base URL of the site as the second parameter of `glue::stick`.  This allows you to easily change where your Glue site is located within a domain without changing the contents of the `$urls` array.  By default this is `/`, meaning that the Glue site is at the root of the domain.
+
+    <?php
+        glue::stick($urls, '/sub/folder');
+    ?>
+    
+### Passing arguments to the controller constructor
+
+Sometimes it is helpful to be able to pass arguments to the constructor of the controller, usually global variables that are derived from the configuration of the site or loaded based on data in the session.
+
+    <?php
+        require_once('glue.php');
+        $BASE_URL = '';
+        // Replace the above line with the following line if your site lives in a subfolder
+        // $BASE_URL = '/sub/folder');
+
+        // This function, for instance, would examine $_SESSION
+        // and load something into $user
+        $user = load_user_from_session();
+        $args = array($user);
+
+        $urls = array(
+            '/' => 'index'
+        );
+
+        class Controller {
+            function __construct($user) {
+                $this->user = $user;
+            }
+        }
+
+        class index extends Controller {
+            // $this->user will be accessible in this controller
+            // and all others extending Controller...
+
+            // ... GET(), other methods...
+        }
+        // and other classes as need be...
+
+        glue::stick($urls, $BASE_URL, $args);
+    ?>
+
+### Catching Errors: 404's, 405's, etc.
 
 This version of Glue has been modified to throw particular exceptions when an HTTP request is received that Glue is not able to handle.
 
@@ -190,12 +247,12 @@ Without any handlers, these exceptions will spew rather ugly looking errors to t
 
     <?php
         try {
-          glue::stick($urls, BASE_URL, array($g));
+            glue::stick($urls, BASE_URL, array($g));
         } catch (BadMethodCallException $e) {
-          // show your own 405 Method Not Allowed page.
+            // show your own 405 Method Not Allowed page.
         } catch (ControllerNotFoundException $e) {
-          // Show your own 500 My Code Done Broke page.
+            // Show your own 500 My Code Done Broke page.
         } catch (URLNotFoundException $e) {
-          // Show your own 404 Not Found page.
+            // Show your own 404 Not Found page.
         }
     ?>
