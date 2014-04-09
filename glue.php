@@ -37,7 +37,13 @@ use \Exception, \BadMethodCallException, \ReflectionClass;
      */
     class Glue {
 
+        protected $baseUrl = '';
+        protected $routes = array();
         protected $methodTranslator = null;
+        
+        public function __construct($baseUrl = '') {
+        	$this->baseUrl = preg_quote($baseUrl);
+        }
         
         /**
          * stick
@@ -52,21 +58,19 @@ use \Exception, \BadMethodCallException, \ReflectionClass;
          * @throws  BadMethodCallException  Thrown if a corresponding GET,POST is not found
          *
          */
-        public function stick($urls, $base_url='', $args=array()) {
+        public function stick($path = null, $method = null) {
 
-            $method = strtoupper($_SERVER['REQUEST_METHOD']);
-            $path = preg_replace('/\\?.*$/', '', $_SERVER['REQUEST_URI']);
-            $base_url = preg_quote($base_url, '/');
+            $path = $path ?: preg_replace('/\\?.*$/', '', $_SERVER['REQUEST_URI']);
+            $method = $method ?: strtoupper($_SERVER['REQUEST_METHOD']);
 
             $found = false;
 
-            krsort($urls);
+            krsort($this->routes);
 
-            foreach ($urls as $regex => $class) {
-                $regex = str_replace('/', '\/', $regex);
-                $regex = '^' . $base_url . $regex . '\/?$';
-                if (preg_match("/$regex/i", $path, $matches)) {
+            foreach ($this->routes as $regex => $controller) {
+            	if (preg_match("/$regex/i", $path, $matches)) {
                     $found = true;
+                    list($class, $args) = $controller;
                     if (class_exists($class)) {
                         if (count($args) && method_exists($class, '__construct')) {
                           $reflect = new ReflectionClass($class);
@@ -89,6 +93,24 @@ use \Exception, \BadMethodCallException, \ReflectionClass;
             if (!$found) {
                 throw new URLNotFoundException("URL, $path, not found.");
             }
+        }
+        
+        
+        public function addRoute($pattern, $controller, $args = array()) {
+        	$pattern = str_replace('/', '\/', $pattern);
+        	$pattern = '^' . $this->baseUrl . $pattern . '\/?$';
+        	$this->routes[$pattern] = array($controller, $args);
+        }
+        
+        public function addRoutes(array $routes) {
+        	foreach ($routes as $pattern => $controller) {
+        		if (is_array($controller)) {
+        			$class = array_shift($controller);
+        			$this->addRoute($pattern, $class, $controller);
+        		} else {
+        			$this->addRoute($pattern, $controller);
+        		}
+        	}
         }
         
         
