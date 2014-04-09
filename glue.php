@@ -37,6 +37,8 @@ use \Exception, \BadMethodCallException, \ReflectionClass;
      */
     class Glue {
 
+        protected $methodTranslator = null;
+        
         /**
          * stick
          *
@@ -72,6 +74,7 @@ use \Exception, \BadMethodCallException, \ReflectionClass;
                         } else {
                           $obj = new $class;
                         }
+                        $method = $this->getControllerMethod($method);
                         if (method_exists($obj, $method)) {
                             $obj->$method($matches);
                         } else {
@@ -87,6 +90,20 @@ use \Exception, \BadMethodCallException, \ReflectionClass;
                 throw new URLNotFoundException("URL, $path, not found.");
             }
         }
+        
+        
+        public function setMethodTranslator(callable $translator) {
+        	$this->methodTranslator = $translator;
+        }
+        
+        protected function getControllerMethod($httpMethod) {
+        	if ($this->methodTranslator) {
+        		return call_user_func($this->methodTranslator, $httpMethod);
+        	} else {
+        		return $httpMethod;
+        	}
+        }
+        
     }
     
     class ControllerNotFoundException extends Exception {}
