@@ -36,7 +36,7 @@ class Glue {
 	 *  @throws  BadMethodCallException  Thrown if a corresponding method is not found.
 	 */
 	public function stick($path = null, $httpMethod = null) {
-		$path = $path ?: preg_replace('/\\?.*$/', '', $_SERVER['REQUEST_URI']);
+		$path = $path ?: self::removeQueryString($_SERVER['REQUEST_URI']);
 		$httpMethod = $httpMethod ?: strtoupper($_SERVER['REQUEST_METHOD']);
 		krsort($this->routes);
 
@@ -107,6 +107,11 @@ class Glue {
 		} else {
 			return $httpMethod;
 		}
+	}
+	
+	
+	public static function removeQueryString($uri) {
+		return preg_replace('/\\?.*$/', '', $uri);
 	}
 	
 }
