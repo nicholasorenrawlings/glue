@@ -30,54 +30,51 @@ class Glue {
 	 *  Match a URI and method to a controller.
 	 *  
 	 *  @param   string? $path           The URI to match.  If not provided, the value of `$_SERVER['REQUEST_URI']` is used.
-	 *  @param   string? $method         The HTTP method that was used.  If not provided, the value of `$_SERVER['REQUEST_METHOD']` is used.
+	 *  @param   string? $httpMethod     The HTTP method that was used.  If not provided, the value of `$_SERVER['REQUEST_METHOD']` is used.
 	 *  @throws  ControllerNotFound		 Thrown if corresponding class is not found.
 	 *  @throws  URLNotFoundException	 Thrown if no match is found.
 	 *  @throws  BadMethodCallException  Thrown if a corresponding method is not found.
 	 */
-	public function stick($path = null, $method = null) {
-
+	public function stick($path = null, $httpMethod = null) {
 		$path = $path ?: preg_replace('/\\?.*$/', '', $_SERVER['REQUEST_URI']);
-		$method = $method ?: strtoupper($_SERVER['REQUEST_METHOD']);
+		$httpMethod = $httpMethod ?: strtoupper($_SERVER['REQUEST_METHOD']);
 		krsort($this->routes);
 
-		foreach ($this->routes as $regex => $controller) {
+		foreach ($this->routes as $regex => $routeInfo) {
 			if (preg_match("#$regex#i", $path, $matches)) {
-				$found = true;
-				list($class, $args) = $controller;
-				if (class_exists($class)) {
-					if (count($args) && method_exists($class, '__construct')) {
-						$reflect = new ReflectionClass($class);
-						$obj = $reflect->newInstanceArgs($args);
-					} else {
-						$obj = new $class;
-					}
-					$methodName = $this->getControllerMethod($method);
-					if (method_exists($obj, $methodName)) {
-						$classReflection = new ReflectionClass($class);
-						$methodReflection = $classReflection->getMethod($methodName);
-						$methodParameters = $methodReflection->getParameters();
-						$parameterValues = array();
-						foreach ($methodParameters as $parameter) {
+				list($className, $classArgs) = $routeInfo;
+				
+				if (class_exists($className)) {
+					$class = new ReflectionClass($className);
+					$controller = $class->newInstanceArgs($classArgs);
+					$methodName = $this->getControllerMethod($httpMethod);
+					
+					if (method_exists($controller, $methodName)) {
+						$method = $class->getMethod($methodName);
+						$params = $method->getParameters();
+						$methodArgs = array();
+						
+						foreach ($params as $parameter) {
 							if ($parameter->name === 'matches') {
-								$parameterValues[] = $matches;
+								$methodArgs[] = $matches;
 							} else if (isset($matches[$parameter->name])) {
-								$parameterValues[] = $matches[$parameter->name];
+								$methodArgs[] = $matches[$parameter->name];
 							} else {
-								$parameterValues[] = null;
+								$methodArgs[] = null;
 							}
 						}
-						return $methodReflection->invokeArgs($obj, $parameterValues);
-					} else {
-						throw new BadMethodCallException("Method, $method, not supported.");
+						
+						return $method->invokeArgs($controller, $methodArgs);
 					}
-				} else {
-					throw new ControllerNotFoundException("Class, $class, not found.");
+					
+					throw new BadMethodCallException("Method $httpMethod not supported by class $className");
 				}
+				
+				throw new ControllerNotFoundException("Class $className not found");
 			}
 		}
 		
-		throw new URLNotFoundException("URL, $path, not found.");
+		throw new URLNotFoundException("URI $path not found");
 	}
 	
 	
