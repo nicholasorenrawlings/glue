@@ -124,34 +124,39 @@ class Glue {
 					
 					if (method_exists($controller, $methodName)) {
 						$method = $class->getMethod($methodName);
-						$params = $method->getParameters();
-						$methodArgs = array();
 						
-						foreach ($params as $parameter) {
-							if ($parameter->name === 'matches') {
-								$methodArgs[] = $matches;
-							} else if (isset($matches[$parameter->name])) {
-								$methodArgs[] = $matches[$parameter->name];
-							} else {
-								$methodArgs[] = null;
+						if ($method->isPublic()) {
+							$params = $method->getParameters();
+							$methodArgs = array();
+						
+							foreach ($params as $parameter) {
+								if ($parameter->name === 'matches') {
+									$methodArgs[] = $matches;
+								} else if (isset($matches[$parameter->name])) {
+									$methodArgs[] = $matches[$parameter->name];
+								} else {
+									$methodArgs[] = null;
+								}
 							}
+						
+							return $method->invokeArgs($controller, $methodArgs);
 						}
 						
-						return $method->invokeArgs($controller, $methodArgs);
+						throw new BadMethodCallException("$className::$methodName() is not accessible");
 					}
 					
-					throw new BadMethodCallException("Method $httpMethod not supported by class $className");
+					throw new BadMethodCallException("$className::$methodName() is not defined");
 				}
 				
-				throw new ControllerNotFoundException("Class $className not found");
+				throw new ControllerNotFoundException("$className is not defined");
 			}
 		}
 		
-		throw new URLNotFoundException("URI $path not found");
+		throw new ResourceNotFoundException("The URI $path does not match any defined routes");
 	}
 	
 }
 
 
 class ControllerNotFoundException extends Exception {}
-class URLNotFoundException extends Exception {}
+class ResourceNotFoundException extends Exception {}
