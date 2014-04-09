@@ -75,9 +75,22 @@ use \Exception, \BadMethodCallException, \ReflectionClass;
                         } else {
                           $obj = new $class;
                         }
-                        $method = $this->getControllerMethod($method);
-                        if (method_exists($obj, $method)) {
-                            return $obj->$method($matches);
+                        $methodName = $this->getControllerMethod($method);
+                        if (method_exists($obj, $methodName)) {
+                            $classReflection = new ReflectionClass($class);
+                            $methodReflection = $classReflection->getMethod($methodName);
+                            $methodParameters = $methodReflection->getParameters();
+							$parameterValues = array();
+							foreach ($methodParameters as $parameter) {
+								if ($parameter->name === 'matches') {
+									$parameterValues[] = $matches;
+								} else if (isset($matches[$parameter->name])) {
+									$parameterValues[] = $matches[$parameter->name];
+								} else {
+									$parameterValues[] = null;
+								}
+							}
+							return $methodReflection->invokeArgs($obj, $parameterValues);
                         } else {
                             throw new BadMethodCallException("Method, $method, not supported.");
                         }
