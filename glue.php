@@ -7,12 +7,6 @@ use \Exception, \BadMethodCallException, \ReflectionClass;
  *  A simple router that maps URIs to classes.
  *  
  *  Derived from [GluePHP](http://gluephp.com) created by Joe Topjian.
- *  
- *  When the URLs are processed:
- *		* deliminators (/) are automatically escaped: (\/)
- *		* The beginning and end are anchored (^ $)
- *		* An optional end slash is added (/?)
- *		* The i option is added for case-insensitive searches
  */
 class Glue {
 	
@@ -21,8 +15,87 @@ class Glue {
 	protected $methodTranslator = null;
 	
 	
+	/**
+	 *  Constructor.
+	 *  
+	 *  @param  string $baseUrl=''
+	 */
 	public function __construct($baseUrl = '') {
 		$this->baseUrl = preg_quote($baseUrl, '#');
+	}
+	
+	
+	/**
+	 *  Add a single route.
+	 *  
+	 *  Regular expressions are automatically anchored to the beginning and end
+	 *  of the URI.  An optional trailing slash is also added.  Regular expressions
+	 *  are evaluated in a case-insensitive manner.
+	 *  
+	 *  @param  string  $pattern     The regular expression to match URIs against.
+	 *  @param  string  $controller  The name of the controller class.
+	 *  @param  mixed[] $args        Optional arguments to pass to the controller's constructor.
+	 */
+	public function addRoute($pattern, $controller, $args = array()) {
+		$pattern = '#^' . $this->baseUrl . $pattern . '/?$#i';
+		$this->routes[$pattern] = array($controller, $args);
+	}
+	
+	
+	/**
+	 *  Add multiple routes.
+	 *  
+	 *  @param  array $routes   The associative array in which the keys are regular
+	 *  expressions and the values are either a string containing the name of a 
+	 *  controller class or an array where the first item is a string containing 
+	 *  the name of a controller class and any subsequent values are parameters
+	 *  to be passed to the controller's constructor.
+	 */
+	public function addRoutes(array $routes) {
+		foreach ($routes as $pattern => $controller) {
+			if (is_array($controller)) {
+				$class = array_shift($controller);
+				$this->addRoute($pattern, $class, $controller);
+			} else {
+				$this->addRoute($pattern, $controller);
+			}
+		}
+	}
+	
+	
+	/**
+	 *  Translate an HTTP method to a controller method.
+	 *  
+	 *  @param   string $httpMethod   The HTTP method to translate.
+	 *  @return  string               The name of the controller method to invoke.
+	 */
+	protected function getControllerMethod($httpMethod) {
+		if ($this->methodTranslator) {
+			return call_user_func($this->methodTranslator, $httpMethod);
+		} else {
+			return $httpMethod;
+		}
+	}
+	
+	
+	/**
+	 *  Remove the query string from a request URI.
+	 *  
+	 *  @param   string $uri   The original URI.
+	 *  @return  string        The URI with the query string removed.
+	 */
+	public static function removeQueryString($uri) {
+		return preg_replace('/\\?.*$/', '', $uri);
+	}
+	
+	
+	/**
+	 *  Set the routine Glue uses to translate HTTP methods into controller methods.
+	 *  
+	 *  @param  callable? $translator   A function that converts an HTTP method into a controller method names.
+	 */
+	public function setMethodTranslator(callable $translator) {
+		$this->methodTranslator = $translator;
 	}
 	
 	
@@ -41,7 +114,7 @@ class Glue {
 		krsort($this->routes);
 
 		foreach ($this->routes as $regex => $routeInfo) {
-			if (preg_match("#$regex#i", $path, $matches)) {
+			if (preg_match($regex, $path, $matches)) {
 				list($className, $classArgs) = $routeInfo;
 				
 				if (class_exists($className)) {
@@ -75,43 +148,6 @@ class Glue {
 		}
 		
 		throw new URLNotFoundException("URI $path not found");
-	}
-	
-	
-	public function addRoute($pattern, $controller, $args = array()) {
-		$pattern = '^' . $this->baseUrl . $pattern . '/?$';
-		$this->routes[$pattern] = array($controller, $args);
-	}
-	
-	
-	public function addRoutes(array $routes) {
-		foreach ($routes as $pattern => $controller) {
-			if (is_array($controller)) {
-				$class = array_shift($controller);
-				$this->addRoute($pattern, $class, $controller);
-			} else {
-				$this->addRoute($pattern, $controller);
-			}
-		}
-	}
-	
-	
-	public function setMethodTranslator(callable $translator) {
-		$this->methodTranslator = $translator;
-	}
-	
-	
-	protected function getControllerMethod($httpMethod) {
-		if ($this->methodTranslator) {
-			return call_user_func($this->methodTranslator, $httpMethod);
-		} else {
-			return $httpMethod;
-		}
-	}
-	
-	
-	public static function removeQueryString($uri) {
-		return preg_replace('/\\?.*$/', '', $uri);
 	}
 	
 }
