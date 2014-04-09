@@ -22,7 +22,7 @@ class Glue {
 	
 	
 	public function __construct($baseUrl = '') {
-		$this->baseUrl = preg_quote($baseUrl);
+		$this->baseUrl = preg_quote($baseUrl, '#');
 	}
 	
 	
@@ -42,7 +42,7 @@ class Glue {
 		krsort($this->routes);
 
 		foreach ($this->routes as $regex => $controller) {
-			if (preg_match("/$regex/i", $path, $matches)) {
+			if (preg_match("#$regex#i", $path, $matches)) {
 				$found = true;
 				list($class, $args) = $controller;
 				if (class_exists($class)) {
@@ -82,8 +82,7 @@ class Glue {
 	
 	
 	public function addRoute($pattern, $controller, $args = array()) {
-		$pattern = str_replace('/', '\/', $pattern);
-		$pattern = '^' . $this->baseUrl . $pattern . '\/?$';
+		$pattern = '^' . $this->baseUrl . $pattern . '/?$';
 		$this->routes[$pattern] = array($controller, $args);
 	}
 	
