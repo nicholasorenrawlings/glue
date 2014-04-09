@@ -62,9 +62,6 @@ use \Exception, \BadMethodCallException, \ReflectionClass;
 
             $path = $path ?: preg_replace('/\\?.*$/', '', $_SERVER['REQUEST_URI']);
             $method = $method ?: strtoupper($_SERVER['REQUEST_METHOD']);
-
-            $found = false;
-
             krsort($this->routes);
 
             foreach ($this->routes as $regex => $controller) {
@@ -80,19 +77,17 @@ use \Exception, \BadMethodCallException, \ReflectionClass;
                         }
                         $method = $this->getControllerMethod($method);
                         if (method_exists($obj, $method)) {
-                            $obj->$method($matches);
+                            return $obj->$method($matches);
                         } else {
                             throw new BadMethodCallException("Method, $method, not supported.");
                         }
                     } else {
                         throw new ControllerNotFoundException("Class, $class, not found.");
                     }
-                    break;
                 }
             }
-            if (!$found) {
-                throw new URLNotFoundException("URL, $path, not found.");
-            }
+            
+            throw new URLNotFoundException("URL, $path, not found.");
         }
         
         
