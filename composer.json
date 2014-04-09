@@ -1,0 +1,10 @@
+{
+	"name": "nicholasorenrawlings/glue",
+	"description": "A simple router that maps URIs to classes",
+	"homepage": "https://github.com/nicholasorenrawlings/glue",
+	"autoload": {
+		"psr-4": {
+			"Glue\\": ""
+		}
+	}
+}
