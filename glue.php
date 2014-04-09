@@ -48,7 +48,7 @@
          * @throws  BadMethodCallException  Thrown if a corresponding GET,POST is not found
          *
          */
-        static function stick ($urls, $base_url='', $args=array()) {
+        public function stick($urls, $base_url='', $args=array()) {
 
             $method = strtoupper($_SERVER['REQUEST_METHOD']);
             $path = preg_replace('/\\?.*$/', '', $_SERVER['REQUEST_URI']);
