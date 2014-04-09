@@ -1,4 +1,6 @@
-<?php
+<?php namespace Glue;
+
+use \Exception, \BadMethodCallException, \ReflectionClass;
 
     /**
      * Modified from glue: http://gluephp.com/
@@ -33,7 +35,7 @@
      * glue::stick($urls);
      *
      */
-    class glue {
+    class Glue {
 
         /**
          * stick
